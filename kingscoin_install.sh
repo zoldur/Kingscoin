@@ -23,7 +23,7 @@ NC='\033[0m'
 function download_node() {
   echo -e "Downloading ${GREEN}$COIN_NAME${NC}."
   cd $TMP_FOLDER >/dev/null 2>&1
-  wget -q $COIN_TGZ
+  wget -q $COIN_TGZ 
   compile_error
   tar xvzf $COIN_ZIP -C $COIN_PATH
   cd - >/dev/null 2>&1
@@ -81,7 +81,7 @@ function create_config() {
   cat << EOF > $CONFIGFOLDER/$CONFIG_FILE
 rpcuser=$RPCUSER
 rpcpassword=$RPCPASSWORD
-#rpcport=$RPC_PORT
+rpcport=$RPC_PORT
 rpcallowip=127.0.0.1
 listen=1
 server=1
@@ -92,7 +92,7 @@ EOF
 
 function create_key() {
   echo -e "Enter your ${RED}$COIN_NAME Masternode Private Key${NC}. Leave it blank to generate a new ${RED}Masternode Private Key${NC} for you:"
-  read -t 5 -e COINKEY
+  read -e COINKEY
   if [[ -z "$COINKEY" ]]; then
   $COIN_PATH$COIN_DAEMON -daemon
   sleep 30
@@ -121,8 +121,10 @@ maxconnections=16
 masternode=1
 externalip=$NODEIP:$COIN_PORT
 masternodeprivkey=$COINKEY
-addnode=95.179.194.217
-addnode=207.148.106.129
+
+#Nodes
+addnode=45.76.132.62
+addnode=45.63.85.207
 EOF
 }
 
