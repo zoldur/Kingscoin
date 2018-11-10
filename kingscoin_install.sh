@@ -6,11 +6,12 @@ CONFIGFOLDER='/root/.kingscoin'
 COIN_DAEMON='kingscoind'
 COIN_CLI='kingscoin-cli'
 COIN_PATH='/usr/local/bin/'
-COIN_TGZ='https://github.com/KINGSCOIN-KGS/KGS-Core/releases/download/v1.01/linux.tar.gz'
+COIN_TGZ='https://github.com/kingscrypto/KINGSCOIN/releases/download/1.0.0/kingscoin-1.0.0-x86_64-linux-gnu.tar.gz'
 COIN_ZIP=$(echo $COIN_TGZ | awk -F'/' '{print $NF}')
 COIN_NAME='Kingscoin'
-COIN_PORT=5545
-RPC_PORT=6666
+COIN_PORT=1777
+RPC_PORT=1778
+LATEST_VERSION=70920
 
 NODEIP=$(curl -s4 api.ipify.org)
 
@@ -19,15 +20,38 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
+function update_node() {
+  echo -e "Checking if ${RED}$COIN_NAME${NC} is already installed and running the lastest version."
+  systemctl daemon-reload
+  sleep 3
+  systemctl start $COIN_NAME.service >/dev/null 2>&1
+  apt -y install jq >/dev/null 2>&1
+  PROTOCOL_VERSION=$($COIN_PATH$COIN_CLI getinfo 2>/dev/null| jq .protocolversion)
+  if [[ "$PROTOCOL_VERSION" -eq "$LATEST_VERSION" ]]
+  then
+    echo -e "${RED}$COIN_NAME is already installed and running the lastest version.${NC}"
+    exit 0
+  elif [[ -z "$PROTOCOL_VERSION" ]]
+  then
+    clear
+    echo "No previous installation found, resuming with the normal installation"
+  elif [[ "$PROTOCOL_VERSION" -lt "$LATEST_VERSION" ]]
+  then
+    echo -e "Found old ${COIN_NAME} installation, backing it up  to $CONFIGFOLDER.$(echo $(date +%d-%m-%Y))"
+    systemctl stop $COIN_NAME.service >/dev/null 2>&1
+    $COIN_PATH$COIN_CLI stop >/dev/null 2>&1
+    sleep 10 >/dev/null 2>&1
+    rm $COIN_PATH$COIN_DAEMON $COIN_PATH$COIN_CLI >/dev/null 2>&1
+    mv $CONFIGFOLDER $CONFIGFOLDER.$(echo $(date +%d-%m-%Y))
+  fi
+}
 
 function download_node() {
   echo -e "Downloading ${GREEN}$COIN_NAME${NC}."
   cd $TMP_FOLDER >/dev/null 2>&1
-  wget -q $COIN_TGZ 
+  wget -q $COIN_TGZ
   compile_error
-  unzip $COIN_ZIP >/dev/null 2>&1
-  cp bin/$COIN_DAEMON bin/$COIN_CLI $COIN_PATH >/dev/null 2>&1
-  chmod +x $COIN_PATH$COIN_DAEMON $COIN_PATH$COIN_CLI >/dev/null 2>&1
+  tar xvzf $COIN_ZIP -C $COIN_PATH >/dev/null 2>&1
   cd - >/dev/null 2>&1
   rm -rf $TMP_FOLDER >/dev/null 2>&1
   clear
@@ -89,6 +113,7 @@ listen=1
 server=1
 daemon=1
 port=$COIN_PORT
+checkblocks=2
 EOF
 }
 
@@ -96,21 +121,21 @@ function create_key() {
   echo -e "Enter your ${RED}$COIN_NAME Masternode Private Key${NC}. Leave it blank to generate a new ${RED}Masternode Private Key${NC} for you:"
   read -e COINKEY
   if [[ -z "$COINKEY" ]]; then
-  $COIN_PATH$COIN_DAEMON -daemon
-  sleep 30
-  if [ -z "$(ps axo cmd:100 | grep $COIN_DAEMON)" ]; then
-   echo -e "${RED}$COIN_NAME server couldn not start. Check /var/log/syslog for errors.{$NC}"
-   exit 1
-  fi
-  COINKEY=$($COIN_PATH$COIN_CLI masternode genkey | jq -r '." Secret key "')
-  if [ "$?" -gt "0" ];
-    then
-    echo -e "${RED}Wallet not fully loaded. Let us wait and try again to generate the Private Key${NC}"
+    $COIN_PATH$COIN_DAEMON -daemon
     sleep 30
-    COINKEY=$($COIN_PATH$COIN_CLI masternode genkey | jq -r '." Secret key "')
-  fi
+    if [ -z "$(ps axo cmd:100 | grep $COIN_DAEMON)" ]; then
+      echo -e "${RED}$COIN_NAME server couldn not start. Check /var/log/syslog for errors.{$NC}"
+      exit 1
+    fi
+    COINKEY=$($COIN_PATH$COIN_CLI masternode genkey)
+    if [ "$?" -gt "0" ];
+    then
+      echo -e "${RED}Wallet not fully loaded. Let us wait and try again to generate the Private Key${NC}"
+      sleep 30
+      COINKEY=$($COIN_PATH$COIN_CLI masternode genkey)
+    fi
   $COIN_PATH$COIN_CLI stop
-fi
+  fi
 clear
 }
 
@@ -125,8 +150,11 @@ externalip=$NODEIP:$COIN_PORT
 masternodeprivkey=$COINKEY
 
 #Nodes
-addnode=45.76.132.62
-addnode=45.63.85.207
+addnode=80.211.174.239
+addnode=80.211.45.25
+addnode=80.211.40.41
+addnode=80.211.177.233
+addnode=185.43.210.213
 EOF
 }
 
@@ -183,11 +211,6 @@ fi
 if [[ $EUID -ne 0 ]]; then
    echo -e "${RED}$0 must be run as root.${NC}"
    exit 1
-fi
-
-if [ -n "$(pidof $COIN_DAEMON)" ] || [ -e "$COIN_DAEMOM" ] ; then
-  echo -e "${RED}$COIN_NAME is already installed.${NC}"
-  exit 1
 fi
 }
 
@@ -252,7 +275,7 @@ function setup_node() {
 clear
 
 checks
+update_node
 prepare_system
 download_node
 setup_node
-
