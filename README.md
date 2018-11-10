@@ -14,7 +14,7 @@ bash kingscoin_install.sh
 After the Masternode is up and running, you need to configure the desktop wallet accordingly. Here are the steps:
 1. Open the Kingscoin Desktop Wallet.
 2. Go to RECEIVE and create a New Address: **MN1**
-3. Send **20000** KGS to **MN1**. You need to send all 20000 coins in one single transaction.  **This is a tiered Masternode so the collateral will change**
+3. Send **20000** KGS to **MN1**. You need to send all 20000 coins in one single transaction.  
 4. Wait for 15 confirmations.
 5. Go to **Help -> "Debug Window - Console"**
 6. Type the following command: **masternode outputs**
@@ -62,7 +62,7 @@ systemctl is-enabled Kingscoin #To check if Kingscoin service is enabled on boot
 ## Donations
 Any donation is highly appreciated
 
-**KGS**: KU3QojAEiZH4SFQVSFE4tibfgXt97X1in2.
-**BTC**: 3MQLEcHXVvxpmwbB811qiC1c6g21ZKa7Jh.
-**ETH**: 0x26B9dDa0616FE0759273D651e77Fe7dd7751E01E.
-**LTC**: LNZpK4rCd1JVSB3rGKTAnTkudV9So9zexB.
+**KGS**: KU3QojAEiZH4SFQVSFE4tibfgXt97X1in2  
+**BTC**: 3MQLEcHXVvxpmwbB811qiC1c6g21ZKa7Jh  
+**ETH**: 0x26B9dDa0616FE0759273D651e77Fe7dd7751E01E  
+**LTC**: LNZpK4rCd1JVSB3rGKTAnTkudV9So9zexB  
